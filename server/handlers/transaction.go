@@ -8,21 +8,23 @@ import (
 	"encoding/json"
 	"math/rand"
 	"net/http"
-	// "os"
+	"os"
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
-	// "github.com/midtrans/midtrans-go/coreapi"
+	"github.com/midtrans/midtrans-go"
+	"github.com/midtrans/midtrans-go/coreapi"
+	"github.com/midtrans/midtrans-go/snap"
 
 	"github.com/gorilla/mux"
 
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// var c = coreapi.Client{
-// 	ServerKey: os.Getenv("SERVER_KEY"),
-// 	ClientKey: os.Getenv("CLIENT_KEY"),
-// }
+var c = coreapi.Client{
+	ServerKey: os.Getenv("SERVER_KEY"),
+	ClientKey: os.Getenv("CLIENT_KEY"),
+}
 
 type handlerTransaction struct {
 	TransactionRepository repositories.TransactionRepository
@@ -150,7 +152,7 @@ func (h *handlerTransaction) UpdateTransaction(w http.ResponseWriter, r *http.Re
 		json.NewEncoder(w).Encode(response)
 	}
 
-	transaction, err := h.TransactionRepository.FindbyIDTransaction(idTrans, "unpay")
+	transaction, err := h.TransactionRepository.FindbyIDTransaction(idTrans, "active")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
@@ -165,7 +167,7 @@ func (h *handlerTransaction) UpdateTransaction(w http.ResponseWriter, r *http.Re
 		transaction.Total = request.Total
 	}
 
-	if request.Status != "unpay" {
+	if request.Status != "active" {
 		transaction.Status = request.Status
 	}
 
@@ -176,7 +178,7 @@ func (h *handlerTransaction) UpdateTransaction(w http.ResponseWriter, r *http.Re
 		json.NewEncoder(w).Encode(response)
 	}
 
-	dataTransactions, err := h.TransactionRepository.FindbyIDTransaction(idTrans, "unpay")
+	dataTransactions, err := h.TransactionRepository.FindbyIDTransaction(idTrans, request.Status)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(err.Error())
@@ -184,30 +186,30 @@ func (h *handlerTransaction) UpdateTransaction(w http.ResponseWriter, r *http.Re
 	}
 
 	// // 1. Initiate Snap client
-	// var s = snap.Client{}
-	// s.New("SB-Mid-server-4eCWOLTHCsl1kjXWS_5hPoWZ", midtrans.Sandbox)
+	var s = snap.Client{}
+	s.New(os.Getenv("SERVER_KEY"), midtrans.Sandbox)
 	// // Use to midtrans.Production if you want Production Environment (accept real transaction).
 
 	// // 2. Initiate Snap request param
-	// req := &snap.Request{
-	// 	TransactionDetails: midtrans.TransactionDetails{
-	// 		OrderID:  strconv.Itoa(idTrans),
-	// 		GrossAmt: int64(dataTransactions.Total),
-	// 	},
-	// 	CreditCard: &snap.CreditCardDetails{
-	// 		Secure: true,
-	// 	},
-	// 	CustomerDetail: &midtrans.CustomerDetails{
-	// 		FName: dataTransactions.User.Name,
-	// 		Email: dataTransactions.User.Email,
-	// 	},
-	// }
+	req := &snap.Request{
+		TransactionDetails: midtrans.TransactionDetails{
+			OrderID:  strconv.Itoa(dataTransactions.ID),
+			GrossAmt: int64(dataTransactions.Total),
+		},
+		CreditCard: &snap.CreditCardDetails{
+			Secure: true,
+		},
+		CustomerDetail: &midtrans.CustomerDetails{
+			FName: dataTransactions.User.Name,
+			Email: dataTransactions.User.Email,
+		},
+	}
 
 	// // 3. Execute request create Snap transaction to Midtrans Snap API
-	// snapResp, _ := s.CreateTransaction(req)
+	snapResp, _ := s.CreateTransaction(req)
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: 200, Data: dataTransactions}
+	response := dto.SuccessResult{Code: 200, Data: snapResp}
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -269,4 +271,22 @@ func (h *handlerTransaction) Notification(w http.ResponseWriter, r *http.Request
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *handlerTransaction) AllProductById(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userId := int(userInfo["id"].(float64))
+
+	transactions, err := h.TransactionRepository.AllProductById(userId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Code: 200, Data: transactions}
+	json.NewEncoder(w).Encode(response)
 }

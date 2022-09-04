@@ -1,12 +1,22 @@
 import React from 'react'
 import { Card, Col, Container, Row } from 'react-bootstrap'
+import { useQuery } from 'react-query'
+
 import Navbar from '../components/navbar/navbar'
 import PhotoProfile from '../assets/img/photoProfile.svg'
 import barcode from '../assets/img/barcode.png'
 import LogoBrown from '../assets/img/logoBrown.svg'
 import Coffee from '../assets/img/coffee2.svg'
+import { API } from '../config/api'
 
 export default function Profile() {
+
+    let { data: transaction } = useQuery("traans1", async () => {
+        const response = await API.get("/transaction-status");
+        return response.data.data;
+      });
+
+
     return (
         <div>
         <Navbar />

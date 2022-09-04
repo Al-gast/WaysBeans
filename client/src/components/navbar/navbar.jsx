@@ -32,10 +32,6 @@ export default function Navbar ({ setShow, show }) {
     findCounter()
     },[]);
 
-        console.log('====================================');
-        console.log(counter);
-        console.log('====================================');
-
     return(
         <nav className='shadow d-flex justify-content-between align-items-center p-2 fixed-top bg-white'>
             <div>
