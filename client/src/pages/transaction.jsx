@@ -2,15 +2,16 @@ import { Container, } from "react-bootstrap"
 import Navbar from "../components/navbar/navbar"
 import Table from 'react-bootstrap/Table';
 import React, { useState} from 'react';
-import DummyIncomeTransaction from '../components/DummyData/transaction'
+import { useQuery } from 'react-query'
+import { API } from '../config/api'
+// import DummyIncomeTransaction from '../components/DummyData/transaction'
 // import ModalTransaction from "../components/modal/ModalTransaction";
 
 function Transaction() {
-    const [incomeTransaction] = useState(DummyIncomeTransaction)
-
-    const [showTransaction, setShowTransaction] = useState(false)
-    const handleShow = () => setShowTransaction(true)
-    const handleClose = () => setShowTransaction(false)
+    let { data: transaction } = useQuery("transactionsCache", async () => {
+        const response = await API.get("/transactions");
+        return response.data.data;
+    });
 
     return(
         <Container>
@@ -22,25 +23,25 @@ function Transaction() {
                         <tr>
                             <th>No</th>
                             <th>Name</th>
-                            <th>Address</th>
-                            <th>Post Code</th>
+                            {/* <th>Address</th> */}
+                            <th>Email</th>
                             <th>Income</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                     {/* MAPPING */}
-                        {incomeTransaction.map((item,index) => (
-                            <tr key={index} onClick={handleShow}>
-                            <td>{item?.no}</td>
-                            <td>{item?.name}</td>
-                            <td>{item?.address}</td>
-                            <td>{item?.postCode}</td>
-                            <td className="tdPrice">{item?.income}</td>
+                        {transaction?.map((item,index) => (
+                            <tr key={index} >
+                            <td>{index + 1}</td>
+                            <td>{item?.user.name}</td>
+                            {/* <td>{item?.user.profile?.address}</td> */}
+                            <td>{item?.user.email}</td>
+                            <td className="tdPrice">{item?.total}</td>
                             <td className={
-                                item.status === 'Success'
+                                item.status === 'success'
                                 ? 'statusSuccess'
-                                : item.status === 'Cancel'
+                                : item.status === 'failed'
                                 ? 'statusCancel'
                                 : item.status === 'Waiting Approve'
                                 ? 'statusWaiting'
