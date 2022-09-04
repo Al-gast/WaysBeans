@@ -4,8 +4,7 @@ import Table from 'react-bootstrap/Table';
 import React, { useState} from 'react';
 import { useQuery } from 'react-query'
 import { API } from '../config/api'
-// import DummyIncomeTransaction from '../components/DummyData/transaction'
-// import ModalTransaction from "../components/modal/ModalTransaction";
+import Rp from 'rupiah-format'
 
 function Transaction() {
     let { data: transaction } = useQuery("transactionsCache", async () => {
@@ -37,7 +36,7 @@ function Transaction() {
                             <td>{item?.user.name}</td>
                             {/* <td>{item?.user.profile?.address}</td> */}
                             <td>{item?.user.email}</td>
-                            <td className="tdPrice">{item?.total}</td>
+                            <td className="tdPrice">{Rp.convert(item?.total)}</td>
                             <td className={
                                 item.status === 'success'
                                 ? 'statusSuccess'
