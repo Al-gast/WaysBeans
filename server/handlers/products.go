@@ -86,6 +86,8 @@ func (h *handlerProduct) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		Stock: Stock,
 	}
 
+	fmt.Println(request)
+
 	validation := validator.New()
 	err := validation.Struct(request)
 	if err != nil {

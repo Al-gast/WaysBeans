@@ -82,35 +82,44 @@ export default function Cart() {
 
         const handleSubmit = useMutation(async (e) => {
             const config = {
-                header: {
+                headers: {
                     "Content-type": "application/json",
                 },
-            }
+                };
 
-            // Insert transaction data
-            const body = JSON.stringify(form)
+                // Insert transaction data
+                const body = JSON.stringify(form);
 
-            const response = await API.patch("/transactionID", body, config)
+                const response = await API.patch("/transactionID", body, config);
 
-            const token = response.data.data.token
+                console.log(response);
 
-            window.snap.pay(token, {
+                const token = response.data.data.token;
+                console.log(token);
+                window.snap.pay(token, {
                 onSuccess: function (result) {
-                    navigate('/profile')
+                    /* You may add your own implementation here */
+                    console.log(result);
+                    navigate("/profile");
                 },
                 onPending: function (result) {
-                    navigate('/profile')
+                    /* You may add your own implementation here */
+                    console.log(result);
+                    navigate("/profile");
                 },
                 onError: function (result) {
+                    /* You may add your own implementation here */
                     console.log(result);
                 },
-                onClose: function (result) {
-                    alert("You closed the popup without finishing the payment")
-                }
-            })
-        })
+                onClose: function () {
+                    /* You may add your own implementation here */
+                    alert("you closed the popup without finishing the payment");
+                },
+                });
+            });
 
-        // // useEffect on Mitrans
+
+       // useEffect on Mitrans
     useEffect(() => {
         //change this to the script source you want to load, for example this is snap.js sandbox env
         const midtransScriptUrl = "https://app.sandbox.midtrans.com/snap/snap.js";
